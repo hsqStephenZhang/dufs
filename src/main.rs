@@ -73,6 +73,7 @@ fn serve(args: Args, running: Arc<AtomicBool>) -> Result<Vec<JoinHandle<()>>> {
     let addrs = args.addrs.clone();
     let port = args.port;
     let tls_config = (args.tls_cert.clone(), args.tls_key.clone());
+    let post_quantum = args.post_quantum;
     let server_handle = Arc::new(Server::init(args, running)?);
     let mut handles = vec![];
     for bind_addr in addrs.iter() {
@@ -85,6 +86,16 @@ fn serve(args: Args, running: Arc<AtomicBool>) -> Result<Vec<JoinHandle<()>>> {
                 match &tls_config {
                     #[cfg(feature = "tls")]
                     (Some(cert_file), Some(key_file)) => {
+                        if post_quantum {
+                            rustls_post_quantum::provider()
+                                .install_default()
+                                .map_err(|err| {
+                                    anyhow!(
+                                        "Failed to install post-quantum provider, err:{:?}",
+                                        err
+                                    )
+                                })?;
+                        }
                         let certs = load_certs(cert_file)?;
                         let key = load_private_key(key_file)?;
                         let mut config = ServerConfig::builder()

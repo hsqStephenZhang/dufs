@@ -283,6 +283,8 @@ pub struct Args {
     pub compress: Compress,
     pub tls_cert: Option<PathBuf>,
     pub tls_key: Option<PathBuf>,
+    #[serde(default = "default_post_quantum")]
+    pub post_quantum: bool,
 }
 
 impl Args {
@@ -607,6 +609,10 @@ fn default_addrs() -> Vec<BindAddr> {
 
 fn default_port() -> u16 {
     5000
+}
+
+fn default_post_quantum() -> bool {
+    true
 }
 
 #[cfg(test)]
