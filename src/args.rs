@@ -233,6 +233,15 @@ pub fn build_cli() -> Command {
                 .value_name("path")
                 .value_parser(value_parser!(PathBuf))
                 .help("Path to the SSL/TLS certificate's private key"),
+        )
+        .arg(
+            Arg::new("post-quantum")
+                .env("DUFSZ_POST_QUANTUM")
+                .hide_env(true)
+                .long("post-quantum")
+                .action(ArgAction::SetTrue)
+                .default_value("true")
+                .help("support post quantum crypto in rustls"),
         );
 
     app
@@ -283,7 +292,6 @@ pub struct Args {
     pub compress: Compress,
     pub tls_cert: Option<PathBuf>,
     pub tls_key: Option<PathBuf>,
-    #[serde(default = "default_post_quantum")]
     pub post_quantum: bool,
 }
 
@@ -413,6 +421,10 @@ impl Args {
                 (Some(_), _) => bail!("No tls-key set"),
                 (_, Some(_)) => bail!("No tls-cert set"),
                 (None, None) => {}
+            }
+
+            if !args.post_quantum {
+                args.post_quantum = matches.get_flag("post-quantum");
             }
         }
         #[cfg(not(feature = "tls"))]
@@ -609,10 +621,6 @@ fn default_addrs() -> Vec<BindAddr> {
 
 fn default_port() -> u16 {
     5000
-}
-
-fn default_post_quantum() -> bool {
-    true
 }
 
 #[cfg(test)]
